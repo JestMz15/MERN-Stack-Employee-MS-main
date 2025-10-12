@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth.js'
@@ -24,6 +25,8 @@ app.use('/api/setting', settingRouter)
 app.use('/api/attendance', attendanceRouter)
 app.use('/api/dashboard', dashboardRouter)
 
-app.listen(process.env.PORT, () => {
-    console.log(`Server is Running on port ${process.env.PORT}`)
+const port = process.env.PORT || 3000
+
+app.listen(port, () => {
+    console.log(`Server is Running on port ${port}`)
 })
