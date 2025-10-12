@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { columns, EmployeeButtons } from '../../utils/EmployeeHelper'
 import DataTable from 'react-data-table-component'
 import axios from 'axios'
+import API_BASE_URL from '../../utils/apiConfig'
 
 const List = () => {
     const [employees, setEmployees] = useState([])
@@ -14,7 +15,7 @@ const List = () => {
             setEmpLoading(true)
           try {
             const responnse = await axios.get(
-              "http://localhost:5000/api/employee",
+              `${API_BASE_URL}/api/employee`,
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -29,7 +30,7 @@ const List = () => {
                 dep_name: emp.department.dep_name,
                 name: emp.userId.name,
                 dob: new Date(emp.dob).toLocaleDateString(),
-                profileImage: <img width={40} className='rounded-full' src={`http://localhost:5000/${emp.userId.profileImage}`} />,
+                profileImage: <img width={40} className='rounded-full' src={`${API_BASE_URL}/${emp.userId.profileImage}`} />,
                 action: (<EmployeeButtons Id={emp._id} />),
               }));
               setEmployees(data);

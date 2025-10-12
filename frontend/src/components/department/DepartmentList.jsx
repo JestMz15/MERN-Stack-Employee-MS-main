@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { columns, DepartmentButtons } from "../../utils/DepartmentHelper";
 import axios from "axios";
+import API_BASE_URL from "../../utils/apiConfig";
 
 const DepartmentList = () => {
   const [departments, setDepartments] = useState([]);
@@ -17,7 +18,7 @@ const DepartmentList = () => {
     setDepLoading(true)
     try {
       const responnse = await axios.get(
-        "http://localhost:5000/api/department",
+        `${API_BASE_URL}/api/department`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
