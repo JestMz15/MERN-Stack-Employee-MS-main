@@ -1,9 +1,9 @@
 import axios from "axios";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-const userContext = createContext();
+const AuthContext = createContext(null);
 
-const authContext = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,7 @@ const authContext = ({ children }) => {
           }
         } else {
           setUser(null);
-          setLoading(false)
+          setLoading(false);
         }
       } catch (error) {
         if (error.response && !error.response.data.error) {
@@ -38,20 +38,21 @@ const authContext = ({ children }) => {
     verifyUser();
   }, []);
 
-  const login = (user) => {
-    setUser(user);
+  const login = (loggedUser) => {
+    setUser(loggedUser);
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
   };
+
   return (
-    <userContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
-    </userContext.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(userContext);
-export default authContext;
+export const useAuth = () => useContext(AuthContext);
+export default AuthProvider;
