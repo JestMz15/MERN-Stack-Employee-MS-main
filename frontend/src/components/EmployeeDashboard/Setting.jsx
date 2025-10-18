@@ -26,7 +26,7 @@ const DEFAULT_PREFERENCES = {
 
 const Setting = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, setTheme, isDark } = useTheme();
 
   const [passwordForm, setPasswordForm] = useState({
@@ -35,6 +35,14 @@ const Setting = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [profileForm, setProfileForm] = useState({
+    name: user.name ?? "",
+    email: user.email ?? "",
+    profileImage: user.profileImage ?? "",
+  });
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -44,6 +52,15 @@ const Setting = () => {
   const [changingPassword, setChangingPassword] = useState(false);
 
   const preferenceStorageKey = useMemo(() => buildPreferenceKey(user._id), [user._id]);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileForm({
+      name: user.name ?? "",
+      email: user.email ?? "",
+      profileImage: user.profileImage ?? "",
+    });
+  }, [user]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -62,6 +79,48 @@ const Setting = () => {
     if (typeof window === "undefined") return;
     localStorage.setItem(preferenceStorageKey, JSON.stringify(preferences));
   }, [preferences, preferenceStorageKey]);
+
+  const handleProfileChange = (event) => {
+    const { name, value } = event.target;
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileSubmit = async (event) => {
+    event.preventDefault();
+    setProfileError("");
+    setProfileSuccess("");
+    setProfileSaving(true);
+    try {
+      const payload = {
+        name: profileForm.name.trim(),
+        email: profileForm.email.trim(),
+        profileImage: profileForm.profileImage?.trim() ?? "",
+      };
+
+      const response = await axios.put(
+        `${API_BASE_URL}/api/auth/profile`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (response.data.success) {
+        setProfileSuccess("Perfil actualizado.");
+        updateUser(response.data.user);
+      }
+    } catch (error) {
+      if (error.response && !error.response.data.success) {
+        setProfileError(error.response.data.error);
+      } else {
+        setProfileError("No se pudo actualizar el perfil.");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const handlePasswordChange = (event) => {
     const { name, value } = event.target;
@@ -192,23 +251,100 @@ const Setting = () => {
         </section>
 
         <section className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900/70">
+          <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900/70 md:col-span-2">
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-200">
                 <FiUser size={18} />
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  Informacion basica
+                  Perfil del administrador
                 </p>
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {user.email}
+                  Actualiza tu informacion visible en el panel
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-              Puedes actualizar tus datos personales desde la seccion de perfil.
-            </p>
+
+            {profileSuccess && (
+              <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-600 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
+                {profileSuccess}
+              </p>
+            )}
+            {profileError && (
+              <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
+                {profileError}
+              </p>
+            )}
+
+            <form onSubmit={handleProfileSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={profileForm.name}
+                  onChange={handleProfileChange}
+                  placeholder="Ej. Administrador General"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-teal-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Correo electronico
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={profileForm.email}
+                  onChange={handleProfileChange}
+                  placeholder="admin@empresa.com"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-teal-300"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  URL de fotografia (opcional)
+                </label>
+                <input
+                  type="url"
+                  name="profileImage"
+                  value={profileForm.profileImage}
+                  onChange={handleProfileChange}
+                  placeholder="https://..."
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-teal-300"
+                />
+              </div>
+              <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileForm({
+                      name: user.name ?? "",
+                      email: user.email ?? "",
+                      profileImage: user.profileImage ?? "",
+                    });
+                    setProfileError("");
+                    setProfileSuccess("");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-300 dark:hover:text-teal-200"
+                >
+                  <FiRefreshCcw size={14} />
+                  Restablecer
+                </button>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 via-teal-600 to-teal-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-teal-500/30 transition hover:from-teal-400 hover:via-teal-500 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+                >
+                  {profileSaving ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </form>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900/70">
