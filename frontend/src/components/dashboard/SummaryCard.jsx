@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const colorTokens = {
   teal: {
@@ -52,3 +52,10 @@ const SummaryCard = ({ icon, text, number, accent = "teal" }) => {
 };
 
 export default SummaryCard;
+
+SummaryCard.propTypes = {
+  icon: PropTypes.node.isRequired,
+  text: PropTypes.string.isRequired,
+  number: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  accent: PropTypes.oneOf(Object.keys(colorTokens)),
+};

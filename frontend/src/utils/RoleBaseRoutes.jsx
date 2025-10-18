@@ -1,20 +1,25 @@
-import React from 'react'
-import { useAuth } from '../context/AuthContext'
-import { Navigate } from 'react-router-dom'
+import PropTypes from "prop-types";
+import { useAuth } from "../context/AuthContext";
+import { Navigate } from "react-router-dom";
 
-const RoleBaseRoutes = ({children, requiredRole}) => {
-    const {user, loading} = useAuth()
+const RoleBaseRoutes = ({ children, requiredRole = [] }) => {
+    const { user, loading } = useAuth();
 
-    if(loading) {
-        return <div>Cargando permisos...</div>
+    if (loading) {
+        return <div>Cargando permisos...</div>;
     }
 
-    if(!requiredRole.includes(user.role)) {
+    if (!requiredRole.includes(user.role)) {
         alert("No tienes permisos para acceder a esta seccion.");
-        return <Navigate to="/unauthorized" replace />; 
+        return <Navigate to="/unauthorized" replace />;
     }
   
-    return user ? children : <Navigate to="/login" />
-}
+    return user ? children : <Navigate to="/login" />;
+};
 
-export default RoleBaseRoutes
+export default RoleBaseRoutes;
+
+RoleBaseRoutes.propTypes = {
+    children: PropTypes.node.isRequired,
+    requiredRole: PropTypes.arrayOf(PropTypes.string),
+};

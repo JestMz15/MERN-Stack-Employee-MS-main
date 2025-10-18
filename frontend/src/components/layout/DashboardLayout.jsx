@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const DashboardLayout = ({ sidebar, children }) => {
   return (
@@ -14,3 +14,8 @@ const DashboardLayout = ({ sidebar, children }) => {
 };
 
 export default DashboardLayout;
+
+DashboardLayout.propTypes = {
+  sidebar: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired,
+};

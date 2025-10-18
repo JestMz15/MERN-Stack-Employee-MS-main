@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import API_BASE_URL from "../../utils/apiConfig";
 import { resolveImageUrl, FALLBACK_AVATAR } from "../../utils/imageUtils";

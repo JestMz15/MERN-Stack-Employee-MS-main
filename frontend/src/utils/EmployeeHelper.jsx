@@ -1,4 +1,5 @@
 import axios from "axios";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "./apiConfig";
 import { FiCalendar, FiDollarSign, FiEdit3, FiEye } from "react-icons/fi";
@@ -122,4 +123,8 @@ export const EmployeeButtons = ({ Id }) => {
       </button>
     </div>
   );
+};
+
+EmployeeButtons.propTypes = {
+  Id: PropTypes.string.isRequired,
 };

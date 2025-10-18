@@ -1,7 +1,6 @@
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API_BASE_URL from "../../utils/apiConfig";
-import { useTheme } from "../../context/ThemeContext";
 import { exportToCSV, exportToPrintablePdf } from "../../utils/exportUtils";
 import {
   FiCalendar,
@@ -22,7 +21,6 @@ const statusLabels = {
 };
 
 const AttendanceReport = () => {
-  const { isDark } = useTheme();
   const [report, setReport] = useState({});
   const [limit] = useState(10);
   const [skip, setSkip] = useState(0);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { columns, DepartmentButtons } from "../../utils/DepartmentHelper";
@@ -6,6 +6,7 @@ import axios from "axios";
 import API_BASE_URL from "../../utils/apiConfig";
 import { useTheme } from "../../context/ThemeContext";
 import getTableStyles from "../../utils/tableStyles";
+import useClientPagination from "../../hooks/useClientPagination";
 import { FiLayers, FiPlusCircle, FiSearch } from "react-icons/fi";
 
 const DepartmentList = () => {
@@ -13,8 +14,17 @@ const DepartmentList = () => {
   const [departments, setDepartments] = useState([]);
   const [depLoading, setDepLoading] = useState(false);
   const [filteredDepartments, setFilteredDepartments] = useState([]);
+  const {
+    currentPage,
+    rowsPerPage,
+    paginatedData,
+    totalRows,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    resetToggle,
+  } = useClientPagination(filteredDepartments);
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     setDepLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/department`, {
@@ -42,11 +52,11 @@ const DepartmentList = () => {
     } finally {
       setDepLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDepartments();
-  }, []);
+  }, [fetchDepartments]);
 
   const filterDepartments = (event) => {
     const value = event.target.value.toLowerCase();
@@ -118,9 +128,17 @@ const DepartmentList = () => {
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
             <DataTable
               columns={columns}
-              data={filteredDepartments}
+              data={paginatedData}
               progressPending={depLoading}
               pagination
+              paginationServer
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[5, 10, 15, 20, 30, 50]}
+              paginationTotalRows={totalRows}
+              paginationDefaultPage={currentPage}
+              paginationResetDefaultPage={resetToggle}
+              onChangePage={handleChangePage}
+              onChangeRowsPerPage={handleChangeRowsPerPage}
               highlightOnHover
               responsive
               striped

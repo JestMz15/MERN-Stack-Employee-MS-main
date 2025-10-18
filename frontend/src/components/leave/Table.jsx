@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DataTable from "react-data-table-component";
 import { columns, LeaveButtons } from "../../utils/LeaveHelper";
 import axios from "axios";
@@ -6,7 +6,8 @@ import API_BASE_URL from "../../utils/apiConfig";
 import { useTheme } from "../../context/ThemeContext";
 import getTableStyles from "../../utils/tableStyles";
 import { exportToCSV, exportToPrintablePdf } from "../../utils/exportUtils";
-import { FiCalendar, FiDownload, FiFilter, FiSearch } from "react-icons/fi";
+import { FiDownload, FiFilter, FiSearch } from "react-icons/fi";
+import useClientPagination from "../../hooks/useClientPagination";
 
 const statusLabels = {
   pending: "Pendiente",
@@ -126,6 +127,15 @@ const Table = () => {
       value: value.toString(),
     }));
   }, [filteredLeaves]);
+  const {
+    currentPage,
+    rowsPerPage,
+    paginatedData,
+    totalRows,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    resetToggle,
+  } = useClientPagination(filteredLeaves);
 
   const handleExportCsv = () => {
     exportToCSV(exportRows, exportHeaders, "permisos_admin.csv", {
@@ -261,12 +271,17 @@ const Table = () => {
           <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-lg backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
             <DataTable
               columns={columns}
-              data={filteredLeaves.map((leave) => ({
-                ...leave,
-                status: leave.status,
-              }))}
+              data={paginatedData}
               progressPending={loading}
               pagination
+              paginationServer
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[5, 10, 15, 20, 30, 50]}
+              paginationTotalRows={totalRows}
+              paginationDefaultPage={currentPage}
+              paginationResetDefaultPage={resetToggle}
+              onChangePage={handleChangePage}
+              onChangeRowsPerPage={handleChangeRowsPerPage}
               highlightOnHover
               responsive
               striped

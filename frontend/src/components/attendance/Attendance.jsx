@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { columns, AttendanceHelper } from "../../utils/AttendanceHelper";
 import DataTable from "react-data-table-component";
@@ -7,6 +7,7 @@ import API_BASE_URL from "../../utils/apiConfig";
 import { useTheme } from "../../context/ThemeContext";
 import getTableStyles from "../../utils/tableStyles";
 import { exportToCSV, exportToPrintablePdf } from "../../utils/exportUtils";
+import useClientPagination from "../../hooks/useClientPagination";
 import {
   FiAlertCircle,
   FiCalendar,
@@ -56,12 +57,17 @@ const Attendance = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const {
+    currentPage,
+    rowsPerPage,
+    paginatedData,
+    totalRows,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    resetToggle,
+  } = useClientPagination(filteredAttendance);
 
-  const statusChange = () => {
-    fetchAttendance();
-  };
-
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/attendance`, {
@@ -83,7 +89,7 @@ const Attendance = () => {
               <AttendanceHelper
                 status={attendanceRecord.status}
                 employeeId={employee?.employeeId}
-                statusChange={statusChange}
+                statusChange={fetchAttendance}
               />
             ),
           };
@@ -98,11 +104,11 @@ const Attendance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAttendance();
-  }, []);
+  }, [fetchAttendance]);
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -270,9 +276,17 @@ const Attendance = () => {
           <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-lg backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
             <DataTable
               columns={columns}
-              data={filteredAttendance}
+              data={paginatedData}
               progressPending={loading}
               pagination
+              paginationServer
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[5, 10, 15, 20, 30, 50]}
+              paginationTotalRows={totalRows}
+              paginationDefaultPage={currentPage}
+              paginationResetDefaultPage={resetToggle}
+              onChangePage={handleChangePage}
+              onChangeRowsPerPage={handleChangeRowsPerPage}
               highlightOnHover
               responsive
               striped

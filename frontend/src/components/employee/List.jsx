@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { columns, EmployeeButtons } from "../../utils/EmployeeHelper";
 import DataTable from "react-data-table-component";
@@ -8,6 +8,7 @@ import { resolveImageUrl, FALLBACK_AVATAR } from "../../utils/imageUtils";
 import { useTheme } from "../../context/ThemeContext";
 import { FiSearch, FiUserPlus } from "react-icons/fi";
 import getTableStyles from "../../utils/tableStyles";
+import useClientPagination from "../../hooks/useClientPagination";
 
 const List = () => {
   const { isDark } = useTheme();
@@ -15,6 +16,15 @@ const List = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [empLoading, setEmpLoading] = useState(false);
+  const {
+    currentPage,
+    rowsPerPage,
+    paginatedData,
+    totalRows,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    resetToggle,
+  } = useClientPagination(filteredEmployees);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -146,9 +156,17 @@ const List = () => {
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
             <DataTable
               columns={columns}
-              data={filteredEmployees}
+              data={paginatedData}
               progressPending={empLoading}
               pagination
+              paginationServer
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[5, 10, 15, 20, 30, 50]}
+              paginationTotalRows={totalRows}
+              paginationDefaultPage={currentPage}
+              paginationResetDefaultPage={resetToggle}
+              onChangePage={handleChangePage}
+              onChangeRowsPerPage={handleChangeRowsPerPage}
               highlightOnHover
               responsive
               striped

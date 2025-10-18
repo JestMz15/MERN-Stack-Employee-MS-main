@@ -1,5 +1,5 @@
 import axios from "axios";
-import React from "react";
+import PropTypes from "prop-types";
 import API_BASE_URL from "./apiConfig";
 
 const statusLabels = {
@@ -106,4 +106,10 @@ export const AttendanceHelper = ({ status, employeeId, statusChange }) => {
       </button>
     </div>
   );
+};
+
+AttendanceHelper.propTypes = {
+  status: PropTypes.string,
+  employeeId: PropTypes.string.isRequired,
+  statusChange: PropTypes.func.isRequired,
 };

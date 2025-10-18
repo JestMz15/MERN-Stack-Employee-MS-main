@@ -1,4 +1,5 @@
 import axios from "axios";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "./apiConfig";
 import { FiEdit3, FiTrash2 } from "react-icons/fi";
@@ -66,4 +67,9 @@ export const DepartmentButtons = ({ Id, onDepartmentDelete }) => {
       </button>
     </div>
   );
+};
+
+DepartmentButtons.propTypes = {
+  Id: PropTypes.string.isRequired,
+  onDepartmentDelete: PropTypes.func.isRequired,
 };

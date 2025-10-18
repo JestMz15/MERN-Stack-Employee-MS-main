@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -7,11 +7,11 @@ import DataTable from "react-data-table-component";
 import { useTheme } from "../../context/ThemeContext";
 import getTableStyles from "../../utils/tableStyles";
 import { exportToCSV, exportToPrintablePdf } from "../../utils/exportUtils";
+import useClientPagination from "../../hooks/useClientPagination";
 import {
   FiCalendar,
   FiDownload,
   FiFilter,
-  FiLayers,
   FiSearch,
   FiTrendingUp,
 } from "react-icons/fi";
@@ -87,6 +87,15 @@ const SalaryView = () => {
       })),
     [filteredRows],
   );
+  const {
+    currentPage,
+    rowsPerPage,
+    paginatedData,
+    totalRows,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    resetToggle,
+  } = useClientPagination(tableData);
 
   const customStyles = useMemo(() => getTableStyles(isDark), [isDark]);
 
@@ -303,9 +312,17 @@ const SalaryView = () => {
           <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-lg backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
             <DataTable
               columns={tableColumns}
-              data={tableData}
+              data={paginatedData}
               progressPending={loading}
               pagination
+              paginationServer
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[5, 10, 15, 20, 30, 50]}
+              paginationTotalRows={totalRows}
+              paginationDefaultPage={currentPage}
+              paginationResetDefaultPage={resetToggle}
+              onChangePage={handleChangePage}
+              onChangeRowsPerPage={handleChangeRowsPerPage}
               highlightOnHover
               responsive
               striped

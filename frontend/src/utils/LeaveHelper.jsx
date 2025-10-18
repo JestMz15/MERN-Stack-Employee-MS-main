@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 const statusLabels = {
@@ -65,4 +66,8 @@ export const LeaveButtons = ({ Id }) => {
       Ver detalle
     </button>
   );
+};
+
+LeaveButtons.propTypes = {
+  Id: PropTypes.string.isRequired,
 };
