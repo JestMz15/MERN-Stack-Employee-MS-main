@@ -1,43 +1,50 @@
 import { useNavigate } from "react-router-dom";
 
+const statusLabels = {
+  pending: "Pendiente",
+  approved: "Aprobado",
+  rejected: "Rechazado",
+};
+
 export const columns = [
   {
-    name: "S No",
+    name: "No",
     selector: (row) => row.sno,
     width: "70px",
   },
   {
-    name: "Emp ID",
+    name: "Codigo",
     selector: (row) => row.employeeId,
     width: "110px",
   },
   {
-    name: "Name",
+    name: "Nombre",
     selector: (row) => row.name,
-    width: "120px",
-  },
-  {
-    name: "Leave Type",
-    selector: (row) => row.leaveType,
-    width: "140px",
-  },
-  {
-    name: "Department",
-    selector: (row) => row.department,
     width: "150px",
   },
   {
-    name: "Days",
+    name: "Tipo de permiso",
+    selector: (row) => row.leaveType,
+    width: "160px",
+  },
+  {
+    name: "Departamento",
+    selector: (row) => row.department,
+    width: "160px",
+  },
+  {
+    name: "Dias",
     selector: (row) => row.days,
     width: "80px",
   },
   {
-    name: "Status",
+    name: "Estado",
     selector: (row) => row.status,
-    width: "100px",
+    cell: (row) => statusLabels[row.status?.toLowerCase()] ?? row.status,
+    width: "120px",
   },
   {
-    name: "Action",
+    name: "Acciones",
     selector: (row) => row.action,
     center: true,
   },
@@ -55,7 +62,7 @@ export const LeaveButtons = ({ Id }) => {
       className="px-4 py-1 bg-teal-500 rounded text-white hover:bg-teal-600"
       onClick={() => handleView(Id)}
     >
-      View
+      Ver detalle
     </button>
   );
 };

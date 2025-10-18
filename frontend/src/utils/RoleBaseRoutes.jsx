@@ -6,12 +6,12 @@ const RoleBaseRoutes = ({children, requiredRole}) => {
     const {user, loading} = useAuth()
 
     if(loading) {
-        return <div>Loading ...</div>
+        return <div>Cargando permisos...</div>
     }
 
     if(!requiredRole.includes(user.role)) {
-        alert("ok");
-       <Navigate to="/unauthorized"/> 
+        alert("No tienes permisos para acceder a esta seccion.");
+        return <Navigate to="/unauthorized" replace />; 
     }
   
     return user ? children : <Navigate to="/login" />

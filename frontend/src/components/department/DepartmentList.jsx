@@ -1,47 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { columns, DepartmentButtons } from "../../utils/DepartmentHelper";
 import axios from "axios";
 import API_BASE_URL from "../../utils/apiConfig";
+import { useTheme } from "../../context/ThemeContext";
+import getTableStyles from "../../utils/tableStyles";
+import { FiLayers, FiPlusCircle, FiSearch } from "react-icons/fi";
 
 const DepartmentList = () => {
+  const { isDark } = useTheme();
   const [departments, setDepartments] = useState([]);
-  const [depLoading, setDepLoading] = useState(false)
-  const [filteredDepartments, setFilteredDepartments] = useState([])
-
-  const onDepartmentDelete =  () => {
-    fetchDepartments()
-  }
+  const [depLoading, setDepLoading] = useState(false);
+  const [filteredDepartments, setFilteredDepartments] = useState([]);
 
   const fetchDepartments = async () => {
-    setDepLoading(true)
+    setDepLoading(true);
     try {
-      const responnse = await axios.get(
-        `${API_BASE_URL}/api/department`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (responnse.data.success) {
-        let sno = 1;
-        const data = await responnse.data.departments.map((dep) => ({
+      const response = await axios.get(`${API_BASE_URL}/api/department`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.data.success) {
+        let serial = 1;
+        const mapped = response.data.departments.map((dep) => ({
           _id: dep._id,
-          sno: sno++,
+          sno: serial++,
           dep_name: dep.dep_name,
-          action: (<DepartmentButtons Id={dep._id} onDepartmentDelete={onDepartmentDelete}/>),
+          action: (
+            <DepartmentButtons Id={dep._id} onDepartmentDelete={fetchDepartments} />
+          ),
         }));
-        setDepartments(data);
-        setFilteredDepartments(data)
+        setDepartments(mapped);
+        setFilteredDepartments(mapped);
       }
     } catch (error) {
-      if(error.response && !error.response.data.success) {
-        alert(error.response.data.error)
-    }
+      if (error.response && !error.response.data.success) {
+        alert(error.response.data.error);
+      }
     } finally {
-      setDepLoading(false)
+      setDepLoading(false);
     }
   };
 
@@ -49,37 +48,98 @@ const DepartmentList = () => {
     fetchDepartments();
   }, []);
 
-  const filterDepartments = (e) => {
-    const records = departments.filter((dep) => 
-    dep.dep_name.toLowerCase().includes(e.target.value.toLowerCase()))
-    setFilteredDepartments(records)
-  }
+  const filterDepartments = (event) => {
+    const value = event.target.value.toLowerCase();
+    if (!value.trim()) {
+      setFilteredDepartments(departments);
+      return;
+    }
+    const records = departments.filter((dep) =>
+      dep.dep_name.toLowerCase().includes(value),
+    );
+    setFilteredDepartments(records);
+  };
+
+  const customTableStyles = useMemo(() => getTableStyles(isDark), [isDark]);
 
   return (
-    <>{depLoading ? <div>Loading ...</div> : 
-    <div className="p-5">
-      <div className="text-center">
-        <h3 className="text-2xl font-bold">Manage Departments</h3>
-      </div>
-      <div className="flex justify-between items-center">
-        <input
-          type="text"
-          placeholder="Seach By Dep Name"
-          className="px-4 py-0.5 border"
-          onChange={filterDepartments}
-        />
-        <Link
-          to="/admin-dashboard/add-department"
-          className="px-4 py-1 bg-teal-600 rounded text-white"
-        >
-          Add New Department
-        </Link>
-      </div>
-      <div className="mt-5">
-        <DataTable columns={columns} data={filteredDepartments} pagination/>
+    <div className="min-h-full w-full bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-8 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold uppercase tracking-widest text-teal-600 dark:text-teal-300">
+              Departamentos
+            </p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Gestion de departamentos
+            </h1>
+            <p className="max-w-xl text-sm text-slate-500 dark:text-slate-400">
+              Visualiza, busca y administra las areas principales de tu organizacion
+              con un panel disenado para ambos temas.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-teal-100 bg-teal-50 px-6 py-4 text-teal-700 shadow-md shadow-teal-100/60 dark:border-teal-500/40 dark:bg-teal-500/10 dark:text-teal-200">
+              <FiLayers size={22} />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-teal-500 dark:text-teal-200/80">
+                  Total de areas
+                </p>
+                <p className="text-3xl font-semibold">{departments.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-sm">
+              <FiSearch
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                size={18}
+              />
+              <input
+                type="text"
+                onChange={filterDepartments}
+                placeholder="Buscar por nombre de departamento..."
+                className="w-full rounded-full border border-slate-200 bg-white py-3 pl-12 pr-6 text-sm text-slate-700 shadow-sm outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus:border-teal-300"
+              />
+            </div>
+            <Link
+              to="/admin-dashboard/add-department"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-r from-teal-500 via-teal-600 to-teal-700 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/30 transition hover:from-teal-400 hover:via-teal-500 hover:to-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+            >
+              <FiPlusCircle size={18} />
+              Nuevo departamento
+            </Link>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-none">
+            <DataTable
+              columns={columns}
+              data={filteredDepartments}
+              progressPending={depLoading}
+              pagination
+              highlightOnHover
+              responsive
+              striped
+              customStyles={customTableStyles}
+              progressComponent={
+                <div className="flex h-40 w-full items-center justify-center text-sm font-medium text-slate-500 dark:text-slate-300">
+                  Cargando departamentos...
+                </div>
+              }
+              noDataComponent={
+                <div className="flex h-40 w-full items-center justify-center text-sm font-medium text-slate-400 dark:text-slate-300">
+                  No se encontraron departamentos con el criterio actual.
+                </div>
+              }
+            />
+          </div>
+        </div>
       </div>
     </div>
-    }</>
   );
 };
 
