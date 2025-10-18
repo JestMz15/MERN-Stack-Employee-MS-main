@@ -26,7 +26,7 @@ To run this project locally, follow these steps:
    cd [projec folder]
    ```
 
-2. **Install dependencies for both frontend and backend:**
+2. **Install dependencies para frontend y backend:**
    ```bash
    # Install backend dependencies
    cd backend
@@ -37,15 +37,23 @@ To run this project locally, follow these steps:
    npm install
    ```
 
-3. **Set up environment variables:**
-   Create a `.env` file in the `backend` directory and add the following:
+3. **Configurar variables de entorno:**
+   Crea un archivo `.env` en el directorio `server` y agrega:
    ```env
    PORT=[Your Port]
    MONGODB_URL=[Connection URL]
    JWT_SECRET=[Your Secret Key]
    ```
 
-4. **Run the application:**
+4. **(Opcional) Poblar la base de datos con datos demo:**
+   ```bash
+   cd server
+   npm run seed:demo
+   ```
+
+   El comando anterior generara usuarios administradores, colaboradores, registros de asistencia, permisos y salarios de prueba.
+
+5. **Ejecutar la aplicacion:**
    ```bash
    # Start the backend server
    npm start
@@ -57,4 +65,3 @@ To run this project locally, follow these steps:
 ---
 
 Feel free to customize this template to better fit your project. Let me know if you need any more help!
-

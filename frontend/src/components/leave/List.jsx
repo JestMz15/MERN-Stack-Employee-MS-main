@@ -154,12 +154,41 @@ const LeavesList = () => {
     { label: "Estado", key: "statusLabel" },
   ];
 
+  const statusTotals = useMemo(() => {
+    const counts = tableData.reduce((acc, row) => {
+      const key = row.statusLabel ?? "Pendiente";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts).map(([label, value]) => ({
+      label,
+      value: value.toString(),
+    }));
+  }, [tableData]);
+
   const handleExportCsv = () => {
-    exportToCSV(tableData, exportHeaders, "permisos.csv");
+    exportToCSV(tableData, exportHeaders, "permisos.csv", {
+      metadata: [
+        { label: "Colaborador", value: user.name },
+        { label: "Registros filtrados", value: tableData.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+      ],
+    });
   };
 
   const handleExportPdf = () => {
-    exportToPrintablePdf("Historial de permisos", exportHeaders, tableData);
+    exportToPrintablePdf("Historial de permisos", exportHeaders, tableData, {
+      subtitle: `Solicitudes registradas por ${user.name}`,
+      metadata: [
+        { label: "Registros filtrados", value: tableData.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+      ],
+      filters: {
+        Busqueda: searchTerm || "Todos",
+      },
+      summary: statusTotals,
+      footerNote: "Reporte generado automaticamente desde Humana",
+    });
   };
 
   return (

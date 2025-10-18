@@ -105,24 +105,57 @@ const AttendanceReport = () => {
     return rows;
   }, [report]);
 
-  const exportHeaders = [
-    { label: "Fecha", key: "date" },
-    { label: "No", key: "sno" },
-    { label: "Codigo", key: "employeeId" },
-    { label: "Nombre", key: "employeeName" },
-    { label: "Departamento", key: "departmentName" },
-    { label: "Estado", key: "status" },
-  ];
+const exportHeaders = [
+  { label: "Fecha", key: "date" },
+  { label: "No", key: "sno" },
+  { label: "Codigo", key: "employeeId" },
+  { label: "Nombre", key: "employeeName" },
+  { label: "Departamento", key: "departmentName" },
+  { label: "Estado", key: "status" },
+];
+
+  const statusTotals = useMemo(() => {
+    const counts = flatRows.reduce((acc, row) => {
+      if (!row.status) return acc;
+      acc[row.status] = (acc[row.status] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts).map(([label, value]) => ({
+      label,
+      value: value.toString(),
+    }));
+  }, [flatRows]);
+
+  const reportDates = Object.keys(report).sort((a, b) => new Date(b) - new Date(a));
+  const dateFilterLabel = dateFilter
+    ? new Date(dateFilter).toLocaleDateString("es-GT")
+    : "Todos";
 
   const handleExportCsv = () => {
-    exportToCSV(flatRows, exportHeaders, "reporte_asistencia_detallado.csv");
+    exportToCSV(flatRows, exportHeaders, "reporte_asistencia_detallado.csv", {
+      metadata: [
+        { label: "Filtro de fecha", value: dateFilterLabel },
+        { label: "Total de fechas", value: reportDates.length },
+        { label: "Total de registros", value: flatRows.length },
+      ],
+    });
   };
 
   const handleExportPdf = () => {
-    exportToPrintablePdf("Reporte de asistencia", exportHeaders, flatRows);
+    exportToPrintablePdf("Reporte de asistencia", exportHeaders, flatRows, {
+      subtitle: "Resumen historico de asistencia del personal",
+      metadata: [
+        { label: "Filtro de fecha", value: dateFilterLabel },
+        { label: "Total de fechas", value: reportDates.length },
+        { label: "Total de registros", value: flatRows.length },
+      ],
+      filters: {
+        "Filtro fecha": dateFilterLabel,
+      },
+      summary: statusTotals,
+      footerNote: "Reporte generado automaticamente desde Humana",
+    });
   };
-
-  const reportDates = Object.keys(report).sort((a, b) => new Date(b) - new Date(a));
 
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-10 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 sm:px-6 lg:px-10">

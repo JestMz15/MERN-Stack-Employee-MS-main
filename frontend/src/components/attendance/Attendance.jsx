@@ -55,6 +55,7 @@ const Attendance = () => {
   const [filteredAttendance, setFilteredAttendance] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const statusChange = () => {
     fetchAttendance();
@@ -120,6 +121,23 @@ const Attendance = () => {
 
   const customStyles = useMemo(() => getTableStyles(isDark), [isDark]);
 
+  const statusTotals = useMemo(() => {
+    const accumulator = filteredAttendance.reduce((acc, record) => {
+      const statusKey = record.status ?? "Pendiente";
+      acc[statusKey] = (acc[statusKey] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(accumulator).map(([statusKey, value]) => {
+      const readableStatus =
+        statusLabels[statusKey?.toLowerCase()] ?? (statusKey ?? "Pendiente");
+      return {
+        label: readableStatus,
+        value: value.toString(),
+      };
+    });
+  }, [filteredAttendance]);
+
   const plainRows = useMemo(
     () =>
       filteredAttendance.map((record) => ({
@@ -143,14 +161,30 @@ const Attendance = () => {
   ];
 
   const handleExportCsv = () => {
-    exportToCSV(plainRows, exportHeaders, "reporte_asistencia.csv");
+    exportToCSV(plainRows, exportHeaders, "reporte_asistencia.csv", {
+      metadata: [
+        { label: "Fecha en curso", value: today },
+        { label: "Registros filtrados", value: filteredAttendance.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+      ],
+    });
   };
 
   const handleExportPdf = () => {
-    exportToPrintablePdf("Asistencia del dia", exportHeaders, plainRows);
+    exportToPrintablePdf("Asistencia del dia", exportHeaders, plainRows, {
+      subtitle: `Resumen diario del ${today}`,
+      metadata: [
+        { label: "Fecha en curso", value: today },
+        { label: "Registros filtrados", value: filteredAttendance.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+      ],
+      filters: {
+        Busqueda: searchTerm || "Todos",
+      },
+      summary: statusTotals,
+      footerNote: "Reporte generado automaticamente desde Humana",
+    });
   };
-
-  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-10 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 sm:px-6 lg:px-8">

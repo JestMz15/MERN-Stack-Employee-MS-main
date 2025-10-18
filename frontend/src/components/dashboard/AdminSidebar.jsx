@@ -5,6 +5,7 @@ import {
   FaCalendarAlt,
   FaCogs,
   FaMoneyBillWave,
+  FaChartPie,
   FaRegCalendarAlt,
   FaTachometerAlt,
   FaUsers,
@@ -50,6 +51,10 @@ const AdminSidebar = () => {
         <NavLink to="/admin-dashboard/salary/add" className={getLinkClasses}>
           <FaMoneyBillWave />
           <span>Salarios</span>
+        </NavLink>
+        <NavLink to="/admin-dashboard/payroll" className={getLinkClasses}>
+          <FaChartPie />
+          <span>Nomina</span>
         </NavLink>
         <NavLink to="/admin-dashboard/attendance" className={getLinkClasses}>
           <FaRegCalendarAlt />

@@ -24,6 +24,15 @@ const SalaryView = () => {
   const [filteredRows, setFilteredRows] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("es-GT", {
+        style: "currency",
+        currency: "GTQ",
+        maximumFractionDigits: 2,
+      }),
+    [],
+  );
 
   useEffect(() => {
     const fetchSalaries = async () => {
@@ -146,12 +155,68 @@ const SalaryView = () => {
     { label: "Fecha pago", key: "payDate" },
   ];
 
+  const salarySummary = useMemo(() => {
+    const count = tableData.length;
+    const totals = tableData.reduce(
+      (acc, row) => {
+        acc.basic += Number(row.basicSalary ?? 0);
+        acc.allowances += Number(row.allowances ?? 0);
+        acc.deductions += Number(row.deductions ?? 0);
+        acc.net += Number(row.netSalary ?? 0);
+        acc.maxNet = Math.max(acc.maxNet, Number(row.netSalary ?? 0));
+        return acc;
+      },
+      { basic: 0, allowances: 0, deductions: 0, net: 0, maxNet: 0 },
+    );
+
+    return {
+      count,
+      totalNet: totals.net,
+      averageNet: count ? totals.net / count : 0,
+      maxNet: totals.maxNet,
+    };
+  }, [tableData]);
+
   const handleExportCsv = () => {
-    exportToCSV(tableData, exportHeaders, "reporte_salarios.csv");
+    exportToCSV(tableData, exportHeaders, "reporte_salarios.csv", {
+      metadata: [
+        { label: "Colaborador", value: user.name },
+        { label: "Registros filtrados", value: tableData.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+        {
+          label: "Total neto",
+          value: currencyFormatter.format(salarySummary.totalNet),
+        },
+      ],
+    });
   };
 
   const handleExportPdf = () => {
-    exportToPrintablePdf("Historial de salarios", exportHeaders, tableData);
+    exportToPrintablePdf("Historial de salarios", exportHeaders, tableData, {
+      subtitle: `Reporte salarial de ${user.name}`,
+      metadata: [
+        { label: "Registros filtrados", value: tableData.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+      ],
+      filters: {
+        Busqueda: searchTerm || "Todos",
+      },
+      summary: [
+        {
+          label: "Total neto",
+          value: currencyFormatter.format(salarySummary.totalNet),
+        },
+        {
+          label: "Promedio neto",
+          value: currencyFormatter.format(salarySummary.averageNet),
+        },
+        {
+          label: "Monto mayor",
+          value: currencyFormatter.format(salarySummary.maxNet),
+        },
+      ],
+      footerNote: "Reporte generado automaticamente desde Humana",
+    });
   };
 
   return (

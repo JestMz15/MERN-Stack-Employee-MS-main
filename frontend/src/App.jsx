@@ -22,6 +22,7 @@ import Table from "./components/leave/Table";
 import Detail from "./components/leave/Detail";
 import Attendance from "./components/attendance/Attendance";
 import AttendanceReport from "./components/attendance/AttendanceReport";
+import AdminPayroll from "./components/payroll/AdminPayroll";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
             path="/admin-dashboard/salary/add"
             element={<AddSalary />}
           ></Route>
+          <Route path="/admin-dashboard/payroll" element={<AdminPayroll />}></Route>
           <Route path="/admin-dashboard/leaves" element={<Table />}></Route>
           <Route path="/admin-dashboard/leaves/:id" element={<Detail />}></Route>
           <Route path="/admin-dashboard/employees/leaves/:id" element={<LeaveList />}></Route>

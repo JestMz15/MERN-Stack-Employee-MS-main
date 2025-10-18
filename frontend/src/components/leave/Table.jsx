@@ -112,12 +112,46 @@ const Table = () => {
     { label: "Estado", key: "estado" },
   ];
 
+  const activeStatusLabel =
+    statusFilters.find((filter) => filter.key === activeStatus)?.label ?? "Todos";
+
+  const statusTotals = useMemo(() => {
+    const counts = filteredLeaves.reduce((acc, leave) => {
+      const key = leave.statusLabel ?? "Pendiente";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts).map(([label, value]) => ({
+      label,
+      value: value.toString(),
+    }));
+  }, [filteredLeaves]);
+
   const handleExportCsv = () => {
-    exportToCSV(exportRows, exportHeaders, "permisos_admin.csv");
+    exportToCSV(exportRows, exportHeaders, "permisos_admin.csv", {
+      metadata: [
+        { label: "Registros totales", value: leaves.length },
+        { label: "Registros filtrados", value: filteredLeaves.length },
+        { label: "Busqueda", value: searchTerm || "Todos" },
+        { label: "Estado", value: activeStatusLabel },
+      ],
+    });
   };
 
   const handleExportPdf = () => {
-    exportToPrintablePdf("Permisos del personal", exportHeaders, exportRows);
+    exportToPrintablePdf("Permisos del personal", exportHeaders, exportRows, {
+      subtitle: "Consolidado general de permisos del equipo",
+      metadata: [
+        { label: "Registros totales", value: leaves.length },
+        { label: "Registros filtrados", value: filteredLeaves.length },
+      ],
+      filters: {
+        Busqueda: searchTerm || "Todos",
+        Estado: activeStatusLabel,
+      },
+      summary: statusTotals,
+      footerNote: "Reporte generado automaticamente desde Humana",
+    });
   };
 
   const customStyles = useMemo(() => getTableStyles(isDark), [isDark]);
