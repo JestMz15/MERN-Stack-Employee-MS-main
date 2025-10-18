@@ -1,3 +1,4 @@
+import "dotenv/config";
 import bcrypt from "bcrypt";
 import connectToDatabase from "./db/db.js";
 import User from "./models/User.js";
@@ -306,4 +307,3 @@ const seed = async () => {
 };
 
 seed();
-

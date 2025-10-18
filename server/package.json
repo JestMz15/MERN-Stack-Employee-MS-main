@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --env-file=.env index.js",
-    "dev": "nodemon --env-file=.env index.js",
-    "seed:demo": "node --env-file=.env seedDemoData.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed:demo": "node seedDemoData.js"
   },
   "keywords": [],
   "author": "",
