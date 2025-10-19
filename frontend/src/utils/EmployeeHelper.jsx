@@ -1,8 +1,15 @@
 import axios from "axios";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import API_BASE_URL from "./apiConfig";
-import { FiCalendar, FiDollarSign, FiEdit3, FiEye } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiDollarSign,
+  FiEdit3,
+  FiEye,
+  FiPower,
+} from "react-icons/fi";
 
 export const columns = [
   {
@@ -81,8 +88,35 @@ export const getEmployees = async (id) => {
   return employees;
 };
 
-export const EmployeeButtons = ({ Id }) => {
+export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
   const navigate = useNavigate();
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const toggleStatus = async () => {
+    if (updatingStatus) return;
+    setUpdatingStatus(true);
+    const nextStatus = status === "inactive" ? "active" : "inactive";
+    try {
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/employee/${Id}/status`,
+        { status: nextStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+      if (response.data.success) {
+        onStatusChange?.();
+      }
+    } catch (error) {
+      const serverMessage =
+        error.response?.data?.error || error.response?.data?.message;
+      alert(serverMessage || "No se pudo actualizar el estado del empleado.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const buttonBase =
     "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
@@ -121,10 +155,31 @@ export const EmployeeButtons = ({ Id }) => {
         <FiCalendar size={14} />
         Permisos
       </button>
+      <button
+        type="button"
+        disabled={updatingStatus}
+        className={`${buttonBase} ${
+          status === "inactive"
+            ? "border-emerald-200 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 focus-visible:outline-emerald-500 dark:border-emerald-500/30 dark:text-emerald-200"
+            : "border-rose-200 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 focus-visible:outline-rose-500 dark:border-rose-500/30 dark:text-rose-200"
+        } disabled:cursor-not-allowed disabled:opacity-60`}
+        onClick={toggleStatus}
+      >
+        <FiPower size={14} />
+        {status === "inactive" ? "Reactivar" : "Dar de baja"}
+      </button>
     </div>
   );
 };
 
 EmployeeButtons.propTypes = {
   Id: PropTypes.string.isRequired,
+  status: PropTypes.string,
+  onStatusChange: PropTypes.func,
 };
+
+EmployeeButtons.defaultProps = {
+  status: "active",
+  onStatusChange: undefined,
+};
+
