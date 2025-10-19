@@ -3,18 +3,28 @@ import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
 
 const RoleBaseRoutes = ({ children, requiredRole = [] }) => {
-    const { user, loading } = useAuth();
+  const { user, loading } = useAuth();
 
-    if (loading) {
-        return <div>Cargando permisos...</div>;
-    }
+  if (loading) {
+    return <div>Cargando permisos...</div>;
+  }
 
-    if (!requiredRole.includes(user.role)) {
-        alert("No tienes permisos para acceder a esta seccion.");
-        return <Navigate to="/unauthorized" replace />;
-    }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const hasRequiredRole =
+    !Array.isArray(requiredRole) ||
+    requiredRole.length === 0 ||
+    requiredRole.includes(user.role);
+
+  if (!hasRequiredRole) {
+    const fallbackPath =
+      user.role === "admin" ? "/admin-dashboard" : "/employee-dashboard";
+    return <Navigate to={fallbackPath} replace />;
+  }
   
-    return user ? children : <Navigate to="/login" />;
+  return children;
 };
 
 export default RoleBaseRoutes;
