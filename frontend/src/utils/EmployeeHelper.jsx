@@ -9,6 +9,7 @@ import {
   FiEdit3,
   FiEye,
   FiPower,
+  FiUploadCloud,
 } from "react-icons/fi";
 
 export const columns = [
@@ -119,11 +120,16 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
   };
 
   const buttonBase =
-    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
+    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold whitespace-nowrap transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
+    <div className="flex min-w-[240px] flex-col gap-3">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          Información
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
         type="button"
         className={`${buttonBase} border-teal-200 bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 focus-visible:outline-teal-500 dark:border-teal-500/30 dark:text-teal-200`}
         onClick={() => navigate(`/admin-dashboard/employees/${Id}`)}
@@ -131,7 +137,25 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
         <FiEye size={14} />
         Ver
       </button>
-      <button
+          <button
+        type="button"
+        className={`${buttonBase} border-teal-200 bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 focus-visible:outline-teal-500 dark:border-teal-500/30 dark:text-teal-200`}
+        onClick={() =>
+          navigate(`/admin-dashboard/employees/${Id}/documentos`)
+        }
+      >
+        <FiUploadCloud size={14} />
+        Expediente
+      </button>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          Gestión
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
         type="button"
         className={`${buttonBase} border-sky-200 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 focus-visible:outline-sky-500 dark:border-sky-500/30 dark:text-sky-200`}
         onClick={() => navigate(`/admin-dashboard/employees/edit/${Id}`)}
@@ -139,7 +163,7 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
         <FiEdit3 size={14} />
         Editar
       </button>
-      <button
+          <button
         type="button"
         className={`${buttonBase} border-amber-200 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 focus-visible:outline-amber-500 dark:border-amber-500/30 dark:text-amber-200`}
         onClick={() => navigate(`/admin-dashboard/employees/salary/${Id}`)}
@@ -147,7 +171,7 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
         <FiDollarSign size={14} />
         Salario
       </button>
-      <button
+          <button
         type="button"
         className={`${buttonBase} border-violet-200 bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 focus-visible:outline-violet-500 dark:border-violet-500/30 dark:text-violet-200`}
         onClick={() => navigate(`/admin-dashboard/employees/leaves/${Id}`)}
@@ -155,7 +179,15 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
         <FiCalendar size={14} />
         Permisos
       </button>
-      <button
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          Estado
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
         type="button"
         disabled={updatingStatus}
         className={`${buttonBase} ${
@@ -168,6 +200,8 @@ export const EmployeeButtons = ({ Id, status, onStatusChange }) => {
         <FiPower size={14} />
         {status === "inactive" ? "Reactivar" : "Dar de baja"}
       </button>
+        </div>
+      </div>
     </div>
   );
 };

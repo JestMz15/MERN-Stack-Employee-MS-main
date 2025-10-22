@@ -8,11 +8,8 @@ import {
   FiCheckCircle,
   FiFileText,
   FiMail,
-  FiPlus,
   FiPower,
   FiShield,
-  FiTrash2,
-  FiUploadCloud,
   FiUser,
 } from "react-icons/fi";
 import API_BASE_URL from "../../utils/apiConfig";
@@ -60,16 +57,6 @@ const View = () => {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [reloadKey, setReloadKey] = useState(0);
-  const [expedienteFile, setExpedienteFile] = useState(null);
-  const [uploadingExpediente, setUploadingExpediente] = useState(false);
-  const [documentForm, setDocumentForm] = useState({
-    label: "",
-    category: "general",
-    file: null,
-  });
-  const [uploadingDocument, setUploadingDocument] = useState(false);
-  const [deletingDocumentId, setDeletingDocumentId] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
@@ -117,7 +104,7 @@ const View = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, reloadKey]);
+  }, [id]);
 
   const profileImage = useMemo(() => {
     if (!employee?.userId?.profileImage) {
@@ -157,151 +144,6 @@ const View = () => {
       navigate("/employee-dashboard");
     } else {
       navigate("/admin-dashboard/employees");
-    }
-  };
-
-  const resolvedEmployeeId = employee?._id ?? id;
-
-  const handleExpedienteChange = (event) => {
-    setExpedienteFile(event.target.files?.[0] ?? null);
-  };
-
-  const handleExpedienteUpload = async (event) => {
-    event.preventDefault();
-    const formElement = event.currentTarget;
-    if (!expedienteFile) {
-      alert("Selecciona un archivo para el expediente.");
-      return;
-    }
-    setUploadingExpediente(true);
-    try {
-      const formData = new FormData();
-      formData.append("expediente", expedienteFile);
-      await axios.post(
-        `${API_BASE_URL}/api/employee/${resolvedEmployeeId}/expediente`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
-      );
-      setExpedienteFile(null);
-      formElement.reset();
-      setReloadKey((previous) => previous + 1);
-    } catch (expedienteError) {
-      const serverMessage =
-        expedienteError.response?.data?.error ??
-        expedienteError.response?.data?.message;
-      alert(
-        serverMessage ||
-          "No se pudo cargar el expediente. Intenta nuevamente.",
-      );
-    } finally {
-      setUploadingExpediente(false);
-    }
-  };
-
-  const handleDocumentFormChange = (event) => {
-    const { name, value, files } = event.target;
-    if (name === "file") {
-      setDocumentForm((previous) => ({
-        ...previous,
-        file: files?.[0] ?? null,
-      }));
-    } else {
-      setDocumentForm((previous) => ({
-        ...previous,
-        [name]: value,
-      }));
-    }
-  };
-
-  const handleDocumentUpload = async (event) => {
-    event.preventDefault();
-    const formElement = event.currentTarget;
-    if (!employee) {
-      return;
-    }
-    const trimmedLabel = documentForm.label.trim();
-    if (!trimmedLabel) {
-      alert("Ingresa un nombre para el documento.");
-      return;
-    }
-    if (!documentForm.file) {
-      alert("Selecciona un archivo para subir.");
-      return;
-    }
-
-    setUploadingDocument(true);
-    try {
-      const formData = new FormData();
-      formData.append("label", trimmedLabel);
-      formData.append("category", documentForm.category);
-      formData.append("document", documentForm.file);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/employee/${resolvedEmployeeId}/documents`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
-      );
-
-      if (response.data.success && response.data.document) {
-        setEmployee((previous) => {
-          if (!previous) return previous;
-          return {
-            ...previous,
-            documents: [...(previous.documents ?? []), response.data.document],
-            updatedAt: new Date(),
-          };
-        });
-        setDocumentForm({ label: "", category: "general", file: null });
-        formElement.reset();
-      }
-    } catch (docError) {
-      const serverMessage =
-        docError.response?.data?.error ?? docError.response?.data?.message;
-      alert(serverMessage || "No se pudo cargar el documento.");
-    } finally {
-      setUploadingDocument(false);
-    }
-  };
-
-  const handleDocumentDelete = async (documentId) => {
-    if (!employee || deletingDocumentId) {
-      return;
-    }
-    setDeletingDocumentId(documentId);
-    try {
-      await axios.delete(
-        `${API_BASE_URL}/api/employee/${resolvedEmployeeId}/documents/${documentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
-      );
-      setEmployee((previous) => {
-        if (!previous) return previous;
-        return {
-          ...previous,
-          documents: (previous.documents ?? []).filter(
-            (doc) => doc._id !== documentId,
-          ),
-          updatedAt: new Date(),
-        };
-      });
-    } catch (deleteError) {
-      const serverMessage =
-        deleteError.response?.data?.error ??
-        deleteError.response?.data?.message;
-      alert(serverMessage || "No se pudo eliminar el documento.");
-    } finally {
-      setDeletingDocumentId("");
     }
   };
 
@@ -565,6 +407,18 @@ const View = () => {
                       Accesos rapidos
                     </p>
                     <div className="mt-3 flex flex-col gap-3">
+                      {!isEmployeeView && (
+                        <Link
+                          to={`/admin-dashboard/employees/${employee?._id ?? id}/documentos`}
+                          className="inline-flex items-center justify-between rounded-2xl border border-teal-200 bg-teal-500/10 px-4 py-3 text-sm font-semibold text-teal-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-500/20 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200"
+                        >
+                          Gestionar expediente
+                          <FiFileText
+                            size={16}
+                            className="text-teal-500 dark:text-teal-200"
+                          />
+                        </Link>
+                      )}
                       <Link
                         to={salaryLink}
                         className="inline-flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-600 shadow-sm transition hover:border-teal-200 hover:bg-teal-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200"
@@ -593,7 +447,7 @@ const View = () => {
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                       Documentacion
@@ -601,140 +455,41 @@ const View = () => {
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                       Expedientes y archivos cargados
                     </h2>
+                    <p className="mt-1 max-w-xl text-xs text-slate-500 dark:text-slate-400">
+                      Consulta los archivos disponibles del empleado. Para agregar o actualizar documentos utiliza el mantenimiento exclusivo del expediente.
+                    </p>
                   </div>
-                  {expedienteUrl && (
-                    <a
-                      href={expedienteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-300 dark:hover:text-teal-200"
-                    >
-                      <FiFileText size={16} />
-                      Ver expediente
-                    </a>
-                  )}
+                  <div className="flex flex-col items-start gap-2 md:items-end">
+                    {expedienteUrl && (
+                      <a
+                        href={expedienteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-300 dark:hover:text-teal-200"
+                      >
+                        <FiFileText size={16} />
+                        Ver expediente
+                      </a>
+                    )}
+                    {!isEmployeeView && (
+                      <Link
+                        to={`/admin-dashboard/employees/${employee?._id ?? id}/documentos`}
+                        className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-teal-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-500/20 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200"
+                      >
+                        Administrar expediente
+                        <FiFileText size={14} />
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
-                {isAdmin && (
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <form
-                      onSubmit={handleExpedienteUpload}
-                      className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-200">
-                          <FiUploadCloud size={18} />
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                            Actualizar expediente general
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Reemplaza el expediente principal (PDF recomendado).
-                          </p>
-                        </div>
-                      </div>
-                      <label className="flex flex-col gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        Archivo
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                          onChange={handleExpedienteChange}
-                          className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        />
-                      </label>
-                      {expedienteFile && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Seleccionado: {expedienteFile.name}
-                        </p>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={uploadingExpediente}
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-white shadow-md transition hover:from-teal-400 hover:to-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <FiUploadCloud size={14} />
-                        {uploadingExpediente ? "Subiendo..." : "Subir expediente"}
-                      </button>
-                    </form>
-
-                    <form
-                      onSubmit={handleDocumentUpload}
-                      className="space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-200/60 text-slate-600 dark:bg-slate-800/60 dark:text-slate-200">
-                          <FiPlus size={18} />
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                            Agregar documento adicional
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Adjunta contratos, identificaciones u otros archivos.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                          Nombre del documento
-                          <input
-                            type="text"
-                            name="label"
-                            value={documentForm.label}
-                            onChange={handleDocumentFormChange}
-                            placeholder="Ejemplo: Contrato laboral"
-                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                          />
-                        </label>
-                        <label className="flex flex-col gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                          Categoria
-                          <select
-                            name="category"
-                            value={documentForm.category}
-                            onChange={handleDocumentFormChange}
-                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                          >
-                            <option value="general">General</option>
-                            <option value="contrato">Contrato</option>
-                            <option value="identificacion">Identificacion</option>
-                            <option value="fiscal">Fiscal</option>
-                          </select>
-                        </label>
-                      </div>
-                      <label className="flex flex-col gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        Archivo
-                        <input
-                          type="file"
-                          name="file"
-                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                          onChange={handleDocumentFormChange}
-                          className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        />
-                      </label>
-                      {documentForm.file && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Seleccionado: {documentForm.file.name}
-                        </p>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={uploadingDocument}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600 shadow-sm transition hover:border-teal-300 hover:text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-300 dark:hover:text-teal-200 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <FiPlus size={14} />
-                        {uploadingDocument ? "Guardando..." : "Subir documento"}
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {documents.length === 0 && !expedienteUrl ? (
-                  <div className="mt-6 flex h-32 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                    No hay documentos asociados a este empleado.
-                  </div>
-                ) : (
-                  <ul className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="mt-6">
+                  {documents.length === 0 && !expedienteUrl ? (
+                    <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      No hay documentos asociados a este empleado.
+                    </div>
+                  ) : (
+                    <ul className="grid gap-4 md:grid-cols-2">
                     {expedienteUrl && (
                       <li className="flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50/70 px-4 py-3 text-sm text-teal-700 shadow-sm dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-200">
                         <div className="flex items-center gap-3">
@@ -775,35 +530,24 @@ const View = () => {
                             <div>
                               <p className="font-semibold">{doc.label}</p>
                               <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                {formatDate(doc.uploadedAt)} • {doc.category}
+                                {formatDate(doc.uploadedAt)} - {doc.category}
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={documentUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-semibold uppercase tracking-widest text-teal-600 transition hover:text-teal-500 dark:text-teal-200"
-                            >
-                              Abrir
-                            </a>
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => handleDocumentDelete(doc._id)}
-                                disabled={deletingDocumentId === doc._id}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 text-rose-500 transition hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 dark:border-rose-500/40 dark:text-rose-200 dark:hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            )}
-                          </div>
+                          <a
+                            href={documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold uppercase tracking-widest text-teal-600 transition hover:text-teal-500 dark:text-teal-200"
+                          >
+                            Abrir
+                          </a>
                         </li>
                       );
                     })}
                   </ul>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -814,3 +558,4 @@ const View = () => {
 };
 
 export default View;
+

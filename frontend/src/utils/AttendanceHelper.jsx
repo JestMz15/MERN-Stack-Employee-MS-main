@@ -1,13 +1,7 @@
+import { useEffect, useState } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import API_BASE_URL from "./apiConfig";
-
-const statusLabels = {
-  present: "Presente",
-  absent: "Ausente",
-  sick: "Enfermo",
-  leave: "Permiso",
-};
 
 export const columns = [
   {
@@ -47,62 +41,86 @@ export const columns = [
   },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "present", label: "Presente" },
+  { value: "absent", label: "Ausente" },
+  { value: "leave", label: "Permiso" },
+  { value: "sick", label: "Enfermo" },
+];
+
 export const AttendanceHelper = ({ status, employeeId, statusChange }) => {
+  const [selectedStatus, setSelectedStatus] = useState(status ?? "");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setSelectedStatus(status ?? "");
+  }, [status]);
+
   const markEmployee = async (nextStatus) => {
-    const response = await axios.put(
-      `${API_BASE_URL}/api/attendance/update/${employeeId}`,
-      { status: nextStatus },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+    if (submitting) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await axios.put(
+        `${API_BASE_URL}/api/attendance/update/${employeeId}`,
+        { status: nextStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      },
-    );
-    if (response.data.success) {
-      statusChange();
+      );
+      await statusChange();
+    } catch (error) {
+      if (error.response && !error.response.data.success) {
+        alert(error.response.data.error);
+      } else {
+        alert("No se pudo actualizar la asistencia. Intenta nuevamente.");
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const buttonBase =
-    "inline-flex items-center justify-center rounded-full px-4 py-1.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
+  const handleSelectChange = (event) => {
+    const nextStatus = event.target.value;
+    setSelectedStatus(nextStatus);
+    markEmployee(nextStatus || null);
+  };
 
-  if (status) {
-    return (
-      <span className="inline-flex min-w-[88px] items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-        {statusLabels[status] ?? status}
-      </span>
-    );
-  }
+  const handleReset = () => {
+    if (!selectedStatus) {
+      return;
+    }
+    setSelectedStatus("");
+    markEmployee(null);
+  };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <div className="flex-1">
+        <select
+          value={selectedStatus}
+          onChange={handleSelectChange}
+          disabled={submitting}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-teal-300"
+        >
+          <option value="">Sin marcar</option>
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
       <button
         type="button"
-        className={`${buttonBase} bg-emerald-500/90 text-white hover:bg-emerald-500 focus-visible:outline-emerald-500`}
-        onClick={() => markEmployee("present")}
+        disabled={submitting || !selectedStatus}
+        onClick={handleReset}
+        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-amber-300 hover:text-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-300"
       >
-        Presente
-      </button>
-      <button
-        type="button"
-        className={`${buttonBase} bg-rose-500/90 text-white hover:bg-rose-500 focus-visible:outline-rose-500`}
-        onClick={() => markEmployee("absent")}
-      >
-        Ausente
-      </button>
-      <button
-        type="button"
-        className={`${buttonBase} bg-slate-500/90 text-white hover:bg-slate-500 focus-visible:outline-slate-500`}
-        onClick={() => markEmployee("sick")}
-      >
-        Enfermo
-      </button>
-      <button
-        type="button"
-        className={`${buttonBase} bg-amber-400 text-slate-900 hover:bg-amber-300 focus-visible:outline-amber-400`}
-        onClick={() => markEmployee("leave")}
-      >
-        Permiso
+        Limpiar
       </button>
     </div>
   );

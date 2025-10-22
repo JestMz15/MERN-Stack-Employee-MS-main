@@ -32,7 +32,9 @@ const getTableStyles = (isDark) => ({
       color: isDark ? "#e2e8f0" : "#0f172a",
       borderBottomWidth: "1px",
       borderBottomColor: isDark ? "#1e293b" : "#e2e8f0",
-      minHeight: "64px",
+      minHeight: "80px",
+      paddingTop: "18px",
+      paddingBottom: "18px",
     },
     stripedStyle: {
       backgroundColor: isDark ? "#0f172a" : "#f8fafc",
@@ -67,4 +69,3 @@ const getTableStyles = (isDark) => ({
 });
 
 export default getTableStyles;
-

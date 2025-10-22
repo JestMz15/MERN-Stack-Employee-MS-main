@@ -7,7 +7,13 @@ import API_BASE_URL from "../../utils/apiConfig";
 import { useTheme } from "../../context/ThemeContext";
 import getTableStyles from "../../utils/tableStyles";
 import useClientPagination from "../../hooks/useClientPagination";
-import { FiLayers, FiPlusCircle, FiSearch } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiFileText,
+  FiLayers,
+  FiPlusCircle,
+  FiSearch,
+} from "react-icons/fi";
 
 const DepartmentList = () => {
   const { isDark } = useTheme();
@@ -34,14 +40,36 @@ const DepartmentList = () => {
       });
       if (response.data.success) {
         let serial = 1;
-        const mapped = response.data.departments.map((dep) => ({
-          _id: dep._id,
-          sno: serial++,
-          dep_name: dep.dep_name,
-          action: (
-            <DepartmentButtons Id={dep._id} onDepartmentDelete={fetchDepartments} />
-          ),
-        }));
+        const mapped = response.data.departments.map((dep) => {
+          const descriptionPlain = dep.description?.trim() ?? "";
+          const createdAt = dep.createdAt ? new Date(dep.createdAt) : null;
+          const updatedAt = dep.updatedAt ? new Date(dep.updatedAt) : null;
+          return {
+            _id: dep._id,
+            sno: serial++,
+            dep_name: dep.dep_name,
+            descriptionPlain,
+            descriptionPreview:
+              descriptionPlain.length > 0
+                ? descriptionPlain
+                : "Sin descripcion registrada",
+            createdAtLabel: createdAt
+              ? createdAt.toLocaleDateString()
+              : "Sin registro",
+            createdAtSortKey: createdAt ? createdAt.getTime() : 0,
+            updatedAtLabel: updatedAt
+              ? updatedAt.toLocaleDateString()
+              : "Sin registro",
+            action: (
+              <DepartmentButtons
+                Id={dep._id}
+                name={dep.dep_name}
+                description={descriptionPlain}
+                onDepartmentDelete={fetchDepartments}
+              />
+            ),
+          };
+        });
         setDepartments(mapped);
         setFilteredDepartments(mapped);
       }
@@ -64,13 +92,41 @@ const DepartmentList = () => {
       setFilteredDepartments(departments);
       return;
     }
-    const records = departments.filter((dep) =>
-      dep.dep_name.toLowerCase().includes(value),
-    );
+    const records = departments.filter((dep) => {
+      const matchesName = dep.dep_name.toLowerCase().includes(value);
+      const matchesDescription = dep.descriptionPlain
+        ?.toLowerCase()
+        .includes(value);
+      return matchesName || matchesDescription;
+    });
     setFilteredDepartments(records);
   };
 
   const customTableStyles = useMemo(() => getTableStyles(isDark), [isDark]);
+  const departmentStats = useMemo(() => {
+    if (departments.length === 0) {
+      return {
+        total: 0,
+        withDescription: 0,
+        lastUpdatedLabel: "Sin registros",
+      };
+    }
+    const withDescription = departments.filter(
+      (dep) => dep.descriptionPlain && dep.descriptionPlain.length > 0,
+    ).length;
+    const mostRecent = departments
+      .map((dep) => ({
+        label: dep.dep_name,
+        sortKey: dep.createdAtSortKey,
+        updatedLabel: dep.updatedAtLabel,
+      }))
+      .sort((a, b) => b.sortKey - a.sortKey)[0];
+    return {
+      total: departments.length,
+      withDescription,
+      lastUpdatedLabel: mostRecent?.updatedLabel ?? "Sin registros",
+    };
+  }, [departments]);
 
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-8 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 sm:px-6 lg:px-8">
@@ -95,8 +151,22 @@ const DepartmentList = () => {
                 <p className="text-xs font-medium uppercase tracking-wide text-teal-500 dark:text-teal-200/80">
                   Total de areas
                 </p>
-                <p className="text-3xl font-semibold">{departments.length}</p>
+                <p className="text-3xl font-semibold">
+                  {departmentStats.total}
+                </p>
               </div>
+            </div>
+            <div className="hidden flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-6 py-4 text-slate-600 shadow-md shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200 lg:flex">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <FiFileText size={14} />
+                Documentacion
+              </div>
+              <p className="text-sm font-medium">
+                {departmentStats.withDescription} departamentos con descripcion
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Ultima actualizacion: {departmentStats.lastUpdatedLabel}
+              </p>
             </div>
           </div>
         </div>

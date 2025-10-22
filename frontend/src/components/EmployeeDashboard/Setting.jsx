@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
@@ -40,6 +40,9 @@ const Setting = () => {
     email: user.email ?? "",
     profileImage: user.profileImage ?? "",
   });
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImageCleared, setProfileImageCleared] = useState(false);
+  const objectUrlRef = useRef(null);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -55,12 +58,26 @@ const Setting = () => {
 
   useEffect(() => {
     if (!user) return;
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setProfileForm({
       name: user.name ?? "",
       email: user.email ?? "",
       profileImage: user.profileImage ?? "",
     });
+    setProfileImageFile(null);
+    setProfileImageCleared(false);
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -91,25 +108,42 @@ const Setting = () => {
     setProfileSuccess("");
     setProfileSaving(true);
     try {
-      const payload = {
-        name: profileForm.name.trim(),
-        email: profileForm.email.trim(),
-        profileImage: profileForm.profileImage?.trim() ?? "",
-      };
+      const formData = new FormData();
+      formData.append("name", profileForm.name.trim());
+      formData.append("email", profileForm.email.trim());
+
+      if (profileImageFile) {
+        formData.append("profileImage", profileImageFile);
+      } else if (profileImageCleared) {
+        formData.append("profileImage", "");
+      }
 
       const response = await axios.put(
         `${API_BASE_URL}/api/auth/profile`,
-        payload,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
           },
         },
       );
 
       if (response.data.success) {
+        const refreshedUser = response.data.user;
         setProfileSuccess("Perfil actualizado.");
-        updateUser(response.data.user);
+        updateUser(refreshedUser);
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current);
+          objectUrlRef.current = null;
+        }
+        setProfileImageFile(null);
+        setProfileImageCleared(false);
+        setProfileForm({
+          name: refreshedUser.name ?? "",
+          email: refreshedUser.email ?? "",
+          profileImage: refreshedUser.profileImage ?? "",
+        });
       }
     } catch (error) {
       if (error.response && !error.response.data.success) {
@@ -595,3 +629,13 @@ const Setting = () => {
 };
 
 export default Setting;
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
 
 const login = async (req, res) => {
   try {
@@ -67,8 +68,26 @@ const updateProfile = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    if (typeof profileImage !== "undefined") {
-      updatePayload.profileImage = profileImage;
+    if (req.file) {
+      if (req.user.profileImagePublicId) {
+        await deleteAsset(req.user.profileImagePublicId);
+      }
+      const uploadResult = await uploadBuffer(req.file.buffer, {
+        folder: "humana/usuarios/perfiles",
+        public_id: `${req.user._id}-${Date.now()}`,
+      });
+      updatePayload.profileImage = uploadResult.secure_url;
+      updatePayload.profileImagePublicId = uploadResult.public_id;
+    } else if (typeof profileImage !== "undefined") {
+      if (profileImage === "") {
+        if (req.user.profileImagePublicId) {
+          await deleteAsset(req.user.profileImagePublicId);
+        }
+        updatePayload.profileImage = "";
+        updatePayload.profileImagePublicId = "";
+      } else {
+        updatePayload.profileImage = profileImage;
+      }
     }
 
     await User.findByIdAndUpdate(req.user._id, updatePayload);
@@ -92,3 +111,4 @@ const updateProfile = async (req, res) => {
 };
 
 export { login, verify, updateProfile };
+
